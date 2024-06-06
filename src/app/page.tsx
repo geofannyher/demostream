@@ -5,7 +5,7 @@ const PlayVideo: React.FC = () => {
   const video1 =
     "https://res.cloudinary.com/dp8ita8x5/video/upload/v1717647802/videoStream/ngedy7l9bog5zn4kjuay.mp4";
   const video2 =
-    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1717566116/videoStream/fzqcsqer81sdvl8hiana.mp4";
+    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1717566427/videoStream/chslvojsihspxxxj80ur.mp4";
   // const [messages, setMessages] = useState<string[]>([]);
   const [currentVideo, setCurrentVideo] = useState(video1);
   // const [loadingText, setLoadingText] = useState(false);
