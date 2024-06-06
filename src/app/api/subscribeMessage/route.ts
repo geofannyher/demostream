@@ -1,27 +1,28 @@
-import { NextApiRequest, NextApiResponse } from "next"
-import amqp, { Message } from "amqplib"
-import { NextResponse } from "next/server"
+import { NextApiResponse } from "next";
+import amqp, { Message } from "amqplib";
+import { NextResponse } from "next/server";
 
-const RABBITMQ_URL = "amqps://lvqhizkj:wlODxXijHupv4JbrB90ivkLrLlJjRorI@octopus.rmq3.cloudamqp.com/lvqhizkj"
-
-let connection: amqp.Connection | any = null
-let channel: amqp.Channel | any = null
+let connection: amqp.Connection | any = null;
+let channel: amqp.Channel | any = null;
 
 async function setupRabbitMQ() {
-  connection = await amqp.connect(RABBITMQ_URL)
-  channel = await connection.createChannel()
-  await channel.assertQueue("audio_queue", { durable: false })
+  if (!process.env.NEXT_RABBITMQ_URL) {
+    throw new Error("RabbitMQ URL is not defined");
+  }
+  connection = await amqp.connect(process.env.NEXT_RABBITMQ_URL);
+  channel = await connection.createChannel();
+  await channel.assertQueue("audio_queue", { durable: false });
 }
 
-export const runtime = "nodejs"
+export const runtime = "nodejs";
 // This is required to enable streaming
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
-  const encoder = new TextEncoder()
+export async function GET(req: Request, res: NextApiResponse) {
+  const encoder = new TextEncoder();
   try {
     if (!connection || !channel) {
-      await setupRabbitMQ()
+      await setupRabbitMQ();
     }
 
     const stream = new ReadableStream({
@@ -32,17 +33,19 @@ export async function GET(req: NextApiRequest, res: NextApiResponse) {
           "audio_queue",
           (msg: Message | null) => {
             if (msg !== null) {
-              console.log("Received message:", msg.content.toString())
-              controller.enqueue(encoder.encode("data: " + msg.content.toString() + "\n\n"))
-              channel.ack(msg)
+              console.log("Received message:", msg.content.toString());
+              controller.enqueue(
+                encoder.encode("data: " + msg.content.toString() + "\n\n")
+              );
+              channel.ack(msg);
             }
           },
-          { noAck: false },
-        )
+          { noAck: false }
+        );
       },
-    })
+    });
 
-    console.log("SSE Connection opened")
+    console.log("SSE Connection opened");
     return new NextResponse(stream, {
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -51,9 +54,11 @@ export async function GET(req: NextApiRequest, res: NextApiResponse) {
         "Cache-Control": "no-cache, no-transform",
         "Content-Encoding": "none",
       },
-    })
+    });
   } catch (error) {
-    console.error("Error subscribing to messages:", error)
-    res.status(500).json({ success: false, message: "Error subscribing to messages" })
+    console.error("Error subscribing to messages:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Error subscribing to messages" });
   }
 }

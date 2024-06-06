@@ -2,8 +2,7 @@ import { NextApiResponse } from "next";
 import amqp from "amqplib";
 import { NextResponse } from "next/server";
 
-const RABBITMQ_URL =
-  "amqps://lvqhizkj:wlODxXijHupv4JbrB90ivkLrLlJjRorI@octopus.rmq3.cloudamqp.com/lvqhizkj";
+const RABBITMQ_URL = process.env.NEXT_RABBITMQ_URL;
 export async function POST(req: Request, res: NextApiResponse) {
   if (req.method === "POST") {
     const { message } = await req.json();
@@ -13,6 +12,13 @@ export async function POST(req: Request, res: NextApiResponse) {
     }
 
     try {
+      if (!RABBITMQ_URL) {
+        return NextResponse.json({
+          success: false,
+          message: "RabbitMQ URL not found",
+        });
+      }
+
       console.log("Connecting to RabbitMQ...");
       const connection = await amqp.connect(RABBITMQ_URL);
       console.log("Connected to RabbitMQ");
