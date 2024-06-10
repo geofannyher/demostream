@@ -18,7 +18,6 @@ const SubmitMessage: React.FC = () => {
 
     try {
       setLoading(true);
-
       const result = await axios.post(
         "/api/audio",
         { text: message },
@@ -28,12 +27,22 @@ const SubmitMessage: React.FC = () => {
       const mainAudioBlob = new Blob([result?.data], {
         type: "audio/mpeg",
       });
-      const url = URL.createObjectURL(mainAudioBlob);
+      const formData = new FormData();
+      formData.append("file", mainAudioBlob);
+      formData.append("upload_preset", "rfc3rxgd");
+      const res = await axios.post(
+        `https://api.cloudinary.com/v1_1/dp8ita8x5/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
       const response = await axios.post("/api/publishMessage", {
-        message: url,
+        message: res?.data?.secure_url,
       });
       setStatus("Add to Queue...");
-
       setResponseMessage(response.data.message);
       setStatus("");
       setMessage("");
