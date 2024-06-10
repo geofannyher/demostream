@@ -16,14 +16,18 @@ const PlayVideo: React.FC = () => {
     const eventSource = new EventSource("/api/subscribeMessage");
     eventSource.addEventListener("message", (event) => {
       console.log("Received message event:", event);
-      setAudioUrl(event.data);
-      setCurrentVideo(video2);
+      const newAudioUrl = event.data;
+      if (newAudioUrl) {
+        setAudioUrl(newAudioUrl);
+      } else {
+        console.error("Received invalid audio URL");
+      }
     });
 
     eventSource.addEventListener("error", (error) => {
       console.error("EventSource error:", error);
       eventSource.close();
-      setTimeout(connectToStream, 1000); // Use 1 second timeout to prevent rapid reconnection attempts
+      setTimeout(connectToStream, 1); // Use 1 second timeout to prevent rapid reconnection attempts
     });
 
     return eventSource;
@@ -48,14 +52,12 @@ const PlayVideo: React.FC = () => {
   }, [audioUrl]);
 
   const handleAudioEnded = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setAudioUrl("");
-      setCurrentVideo(video1); // Switch back to video1 when audio ends
-    }
+    console.log("Audio ended");
+    setCurrentVideo(video1); // Switch back to video1 when audio ends
   };
 
-  const handleAudioPlay = () => {
+  const handleAudioCanPlayThrough = () => {
+    console.log("Audio can play through");
     setCurrentVideo(video2); // Switch to video2 when audio starts playing
   };
 
@@ -84,9 +86,10 @@ const PlayVideo: React.FC = () => {
         <audio
           ref={audioRef}
           onEnded={handleAudioEnded}
-          onPlay={handleAudioPlay}
+          onCanPlayThrough={handleAudioCanPlayThrough}
           autoPlay
-          style={{ display: "none" }}
+          controls
+          // style={{ opacity: 0, height: 0 }}
         >
           <source src={audioUrl} type="audio/mpeg" />
           Your browser does not support the audio element.

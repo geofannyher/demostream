@@ -1,19 +1,24 @@
 "use client";
 import React, { useState } from "react";
 import axios from "axios";
+import { LoadingOutlined } from "@ant-design/icons";
 
 const SubmitMessage: React.FC = () => {
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("");
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
 
   const handleSend = async () => {
     if (!message.trim()) {
+      setLoading(false);
       setResponseMessage("Message cannot be empty");
       return;
     }
 
     try {
+      setLoading(true);
+
       const result = await axios.post(
         "/api/audio",
         { text: message },
@@ -32,7 +37,9 @@ const SubmitMessage: React.FC = () => {
       setResponseMessage(response.data.message);
       setStatus("");
       setMessage("");
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       setStatus("");
       console.error("Error sending message:", error);
       setResponseMessage("Error sending message");
@@ -53,10 +60,18 @@ const SubmitMessage: React.FC = () => {
           />
         </div>
         <button
+          disabled={loading}
           className="w-full bg-violet-600 hover:bg-violet-900 transition duration-300 text-white p-2 rounded"
           onClick={handleSend}
         >
-          {status ? status : "Send Message"}
+          {loading ? (
+            <span>
+              <LoadingOutlined style={{ marginRight: 8 }} />
+              {status}
+            </span>
+          ) : (
+            "Send Message"
+          )}
         </button>
         {responseMessage && (
           <p className="mt-4 text-center">{responseMessage}</p>
