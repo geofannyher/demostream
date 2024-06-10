@@ -11,25 +11,31 @@ const SubmitMessage: React.FC = () => {
 
   const handleSend = async () => {
     if (!message.trim()) {
-      setLoading(false);
       setResponseMessage("Message cannot be empty");
       return;
     }
 
     try {
       setLoading(true);
+      setStatus("Sending message...");
       const result = await axios.post(
         "/api/audio",
         { text: message },
         { responseType: "arraybuffer" }
       );
-      setStatus("processing audio...");
-      const mainAudioBlob = new Blob([result?.data], {
+
+      if (result.status !== 200) {
+        throw new Error("Failed to generate audio");
+      }
+
+      setStatus("Processing audio...");
+      const mainAudioBlob = new Blob([result.data], {
         type: "audio/mpeg",
       });
       const formData = new FormData();
       formData.append("file", mainAudioBlob);
       formData.append("upload_preset", "rfc3rxgd");
+
       const res = await axios.post(
         `https://api.cloudinary.com/v1_1/dp8ita8x5/upload`,
         formData,
@@ -39,19 +45,28 @@ const SubmitMessage: React.FC = () => {
           },
         }
       );
+
+      if (res.status !== 200) {
+        setResponseMessage("Failed to upload audio to Cloudinary");
+      }
+
+      setStatus("Publishing message...");
       const response = await axios.post("/api/publishMessage", {
-        message: res?.data?.secure_url,
+        message: res.data.secure_url,
       });
-      setStatus("Add to Queue...");
-      setResponseMessage(response.data.message);
-      setStatus("");
+
+      if (response.status !== 200) {
+        setResponseMessage("Failed to publish message");
+      }
+
+      setResponseMessage("Message successfully sent and processed");
       setMessage("");
-      setLoading(false);
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      setResponseMessage(`Error: ${error.message}`);
+    } finally {
       setLoading(false);
       setStatus("");
-      console.error("Error sending message:", error);
-      setResponseMessage("Error sending message");
     }
   };
 
@@ -83,8 +98,16 @@ const SubmitMessage: React.FC = () => {
           )}
         </button>
         {responseMessage && (
-          <p className="mt-4 text-center">{responseMessage}</p>
-        )}{" "}
+          <p
+            className={`mt-4 text-center ${
+              responseMessage.startsWith("Error")
+                ? "text-red-500"
+                : "text-green-500"
+            }`}
+          >
+            {responseMessage}
+          </p>
+        )}
       </div>
     </div>
   );
