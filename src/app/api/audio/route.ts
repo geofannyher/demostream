@@ -1,7 +1,7 @@
 import axios from "axios";
 import { NextResponse } from "next/server";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   const { text } = await req.json();
   try {
     const result = await axios.post(
@@ -26,8 +26,15 @@ export async function POST(req: Request, res: Response) {
       }
     );
 
-    return NextResponse.json({ data: result.data });
-  } catch (error) {
-    return NextResponse.json({ error: error });
+    const audioBuffer = Buffer.from(result.data, "binary");
+
+    return new Response(audioBuffer, {
+      headers: {
+        "Content-Type": "audio/mpeg",
+        "Content-Length": audioBuffer.length.toString(),
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message });
   }
 }

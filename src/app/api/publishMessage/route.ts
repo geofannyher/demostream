@@ -6,7 +6,6 @@ const RABBITMQ_URL = process.env.NEXT_RABBITMQ_URL;
 export async function POST(req: Request, res: NextApiResponse) {
   if (req.method === "POST") {
     const { message } = await req.json();
-    console.log(message, "be");
     if (typeof message !== "string" || message.trim() === "") {
       return NextResponse.json({ success: false, message: "Invalid message" });
     }

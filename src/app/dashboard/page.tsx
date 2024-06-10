@@ -14,9 +14,15 @@ const SubmitMessage: React.FC = () => {
     }
 
     try {
-      const res = await axios.post("/api/audio", { text: message });
+      const result = await axios.post(
+        "/api/audio",
+        { text: message },
+        { responseType: "arraybuffer" }
+      );
       setStatus("processing audio...");
-      const mainAudioBlob = new Blob([res?.data.data], { type: "audio/mpeg" });
+      const mainAudioBlob = new Blob([result?.data], {
+        type: "audio/mpeg",
+      });
       const url = URL.createObjectURL(mainAudioBlob);
       const response = await axios.post("/api/publishMessage", {
         message: url,
@@ -54,7 +60,7 @@ const SubmitMessage: React.FC = () => {
         </button>
         {responseMessage && (
           <p className="mt-4 text-center">{responseMessage}</p>
-        )}
+        )}{" "}
       </div>
     </div>
   );
