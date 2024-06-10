@@ -89,7 +89,7 @@ const PlayVideo: React.FC = () => {
           onCanPlayThrough={handleAudioCanPlayThrough}
           autoPlay
           controls
-          style={{ display: "none" }}
+          // style={{ display: "none" }}
         >
           <source src={audioUrl} type="audio/mpeg" />
           Your browser does not support the audio element.
