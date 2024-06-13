@@ -11,10 +11,11 @@ const PlayVideo: React.FC = () => {
   const [currentVideo, setCurrentVideo] = useState(video1);
   const [audioUrl, setAudioUrl] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   const connectToStream = () => {
-    const eventSource = new EventSource("/api/subscribeMessage");
-    eventSource.addEventListener("message", (event) => {
+    const es = new EventSource("/api/subscribeMessage");
+    es.addEventListener("message", (event) => {
       console.log("Received message event:", event);
       const newAudioUrl = event.data;
       if (newAudioUrl) {
@@ -24,20 +25,22 @@ const PlayVideo: React.FC = () => {
       }
     });
 
-    eventSource.addEventListener("error", (error) => {
+    es.addEventListener("error", (error) => {
       console.error("EventSource error:", error);
-      eventSource.close();
-      setTimeout(connectToStream, 1); // Use 1 second timeout to prevent rapid reconnection attempts
+      es.close();
+      setTimeout(connectToStream, 1000); // Use 1 second timeout to prevent rapid reconnection attempts
     });
 
-    return eventSource;
+    setEventSource(es);
   };
 
   useEffect(() => {
-    const eventSource = connectToStream();
+    connectToStream();
     return () => {
       console.log("CLOSED");
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, []);
 
@@ -89,7 +92,7 @@ const PlayVideo: React.FC = () => {
           onCanPlayThrough={handleAudioCanPlayThrough}
           autoPlay
           controls
-          // style={{ display: "none" }}
+          style={{ display: "none" }} // Hide audio controls
         >
           <source src={audioUrl} type="audio/mpeg" />
           Your browser does not support the audio element.

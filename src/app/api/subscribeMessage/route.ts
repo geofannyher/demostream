@@ -2,8 +2,8 @@ import { NextApiResponse } from "next";
 import amqp, { Message } from "amqplib";
 import { NextResponse } from "next/server";
 
-let connection: amqp.Connection | any = null;
-let channel: amqp.Channel | any = null;
+let connection: any;
+let channel: any;
 
 async function setupRabbitMQ() {
   if (!process.env.NEXT_RABBITMQ_URL) {
@@ -11,7 +11,7 @@ async function setupRabbitMQ() {
   }
   connection = await amqp.connect(process.env.NEXT_RABBITMQ_URL);
   channel = await connection.createChannel();
-  await channel.assertQueue("audio_queue3", { durable: false });
+  await channel.assertQueue("audio_queue3", { durable: true });
 }
 
 export const runtime = "nodejs";
@@ -26,22 +26,36 @@ export async function GET(req: Request, res: NextApiResponse) {
     }
 
     const stream = new ReadableStream({
-      start(controller) {
-        // Subscribe to Redis updates for the key: "posts"
-        // In case of any error, just log it
-        channel.consume(
-          "audio_queue3",
-          (msg: Message | null) => {
-            if (msg !== null) {
-              console.log("Received message:", msg.content.toString());
-              controller.enqueue(
-                encoder.encode("data: " + msg.content.toString() + "\n\n")
+      async start(controller) {
+        const processMessage = (msg: Message) => {
+          if (msg !== null) {
+            console.log("Received message:", msg.content.toString());
+            controller.enqueue(
+              encoder.encode("data: " + msg.content.toString() + "\n\n")
+            );
+
+            return new Promise((resolve) => {
+              // Wait for audio to finish playing
+              const audioElement = new Audio(
+                URL.createObjectURL(new Blob([msg.content]))
               );
-              channel.ack(msg);
-            }
-          },
-          { noAck: false }
-        );
+              audioElement.play();
+              audioElement.onended = () => {
+                channel.ack(msg);
+                resolve();
+              };
+            });
+          }
+        };
+
+        while (true) {
+          const msg = await channel.get("audio_queue3", { noAck: false });
+          if (msg) {
+            await processMessage(msg);
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for 1 second before checking for new messages
+          }
+        }
       },
     });
 
@@ -57,8 +71,9 @@ export async function GET(req: Request, res: NextApiResponse) {
     });
   } catch (error) {
     console.error("Error subscribing to messages:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Error subscribing to messages" });
+    return NextResponse.json({
+      success: false,
+      message: "Error subscribing to messages",
+    });
   }
 }
