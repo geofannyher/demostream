@@ -11,41 +11,40 @@ const PlayVideo: React.FC = () => {
   const [currentVideo, setCurrentVideo] = useState(video1);
   const [audioUrl, setAudioUrl] = useState("");
   const audioRef = useRef<HTMLAudioElement>(null);
-  const [eventSource, setEventSource] = useState<EventSource | null>(null);
 
   const connectToStream = () => {
-    const es = new EventSource("/api/subscribeMessage");
-    es.addEventListener("message", (event) => {
+    const eventSource = new EventSource("/api/subscribeMessage");
+    eventSource.addEventListener("message", (event) => {
       console.log("Received message event:", event);
-      const newAudioUrl = event.data;
+      const newAudioUrl = event.data.trim();
       if (newAudioUrl) {
+        console.log("Setting new audio URL:", newAudioUrl);
         setAudioUrl(newAudioUrl);
       } else {
         console.error("Received invalid audio URL");
       }
     });
 
-    es.addEventListener("error", (error) => {
+    eventSource.addEventListener("error", (error) => {
       console.error("EventSource error:", error);
-      es.close();
+      eventSource.close();
       setTimeout(connectToStream, 1000); // Use 1 second timeout to prevent rapid reconnection attempts
     });
 
-    setEventSource(es);
+    return eventSource;
   };
 
   useEffect(() => {
-    connectToStream();
+    const eventSource = connectToStream();
     return () => {
       console.log("CLOSED");
-      if (eventSource) {
-        eventSource.close();
-      }
+      eventSource.close();
     };
   }, []);
 
   useEffect(() => {
     if (audioRef.current && audioUrl) {
+      console.log("Playing audio from URL:", audioUrl);
       audioRef.current.src = audioUrl;
       audioRef.current.load();
       audioRef.current.play().catch((error) => {
@@ -92,7 +91,6 @@ const PlayVideo: React.FC = () => {
           onCanPlayThrough={handleAudioCanPlayThrough}
           autoPlay
           controls
-          style={{ display: "none" }} // Hide audio controls
         >
           <source src={audioUrl} type="audio/mpeg" />
           Your browser does not support the audio element.

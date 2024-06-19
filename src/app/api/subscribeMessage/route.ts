@@ -2,8 +2,8 @@ import { NextApiResponse } from "next";
 import amqp, { Message } from "amqplib";
 import { NextResponse } from "next/server";
 
-let connection: any;
-let channel: any;
+let connection: amqp.Connection;
+let channel: amqp.Channel;
 
 async function setupRabbitMQ() {
   if (!process.env.NEXT_RABBITMQ_URL) {
@@ -11,7 +11,42 @@ async function setupRabbitMQ() {
   }
   connection = await amqp.connect(process.env.NEXT_RABBITMQ_URL);
   channel = await connection.createChannel();
-  await channel.assertQueue("audio_queue3", { durable: true });
+  await channel.assertQueue("audio_queue10", { durable: true });
+  channel.prefetch(1); // Ensure only one message is processed at a time
+  console.log("RabbitMQ setup completed");
+}
+
+async function consumeMessages(
+  controller: ReadableStreamDefaultController,
+  encoder: TextEncoder
+) {
+  if (!connection || !channel) {
+    await setupRabbitMQ();
+  }
+
+  channel.consume(
+    "audio_queue10",
+    (msg: Message | null) => {
+      if (msg !== null) {
+        const messageContent = msg.content.toString();
+        console.log("Received message:", messageContent);
+        controller.enqueue(encoder.encode("data: " + messageContent + "\n\n"));
+
+        const audioElement = new Audio(messageContent);
+        audioElement.play().catch((error) => {
+          console.error("Error playing audio:", error);
+        });
+
+        audioElement.onended = () => {
+          console.log("Audio finished playing, acknowledging message");
+          channel.ack(msg);
+        };
+      } else {
+        console.log("Received null message");
+      }
+    },
+    { noAck: false }
+  );
 }
 
 export const runtime = "nodejs";
@@ -26,36 +61,8 @@ export async function GET(req: Request, res: NextApiResponse) {
     }
 
     const stream = new ReadableStream({
-      async start(controller) {
-        const processMessage = (msg: Message) => {
-          if (msg !== null) {
-            console.log("Received message:", msg.content.toString());
-            controller.enqueue(
-              encoder.encode("data: " + msg.content.toString() + "\n\n")
-            );
-
-            return new Promise((resolve) => {
-              // Wait for audio to finish playing
-              const audioElement = new Audio(
-                URL.createObjectURL(new Blob([msg.content]))
-              );
-              audioElement.play();
-              audioElement.onended = () => {
-                channel.ack(msg);
-                resolve();
-              };
-            });
-          }
-        };
-
-        while (true) {
-          const msg = await channel.get("audio_queue3", { noAck: false });
-          if (msg) {
-            await processMessage(msg);
-          } else {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for 1 second before checking for new messages
-          }
-        }
+      start(controller) {
+        consumeMessages(controller, encoder).catch(console.error);
       },
     });
 
