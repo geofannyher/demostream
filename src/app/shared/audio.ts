@@ -1,0 +1,16 @@
+export const audios = [
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784391/videoStream/audio/pml8sun5agx8gpeghved.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784391/videoStream/audio/wmrifnbiv6bkx18gevy8.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784391/videoStream/audio/nqeypjuwbjdgntaphxdx.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/r8z0mrlr3hy8tafbczpt.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/vxvpbmvybfpdugudy51r.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/vyx4prmcqzrmypmdzqsv.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/j4dqpuafh4a3ivirqu9d.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/oaxgw9mgxwfqsbiazs2y.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784390/videoStream/audio/tlcg5szezfhn9crzkvv6.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784389/videoStream/audio/nayecgtshvtwnvroxroj.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784379/videoStream/audio/whsggxc11kbclsauyog0.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784379/videoStream/audio/vblfivwth45fj8y5jz2l.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784379/videoStream/audio/nc2o0cvv7izp338ratq2.mp3",
+  "https://res.cloudinary.com/dp8ita8x5/video/upload/v1718784379/videoStream/audio/hnsvhmuznll0nrgllogv.mp3",
+];
