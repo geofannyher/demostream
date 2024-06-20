@@ -7,9 +7,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Demo Streaming App",
   description: "Streaming",
-  icons: {
-    icon: "/next.svg",
-  },
 };
 
 export default function RootLayout({

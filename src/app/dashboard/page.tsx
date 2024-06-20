@@ -12,6 +12,9 @@ const SubmitMessage: React.FC = () => {
   const [status, setStatus] = useState("");
   const [api, context] = notification.useNotification();
   const [responseMessage, setResponseMessage] = useState<string | null>(null);
+  const [loadingAudioIndex, setLoadingAudioIndex] = useState<number | null>(
+    null
+  );
 
   const handleSend = async () => {
     if (!message.trim()) {
@@ -74,7 +77,8 @@ const SubmitMessage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (audio: string) => {
+  const handleSubmit = async (audio: string, index: number | null) => {
+    setLoadingAudioIndex(index);
     try {
       const res = await axios.post("/api/publishMessage", {
         message: audio,
@@ -82,11 +86,14 @@ const SubmitMessage: React.FC = () => {
       if (res.status !== 200) {
         return api.error({ message: "Failed to publish message" });
       }
+
       return api.success({
         message: "Message successfully sent and processed",
       });
     } catch (error) {
       return api.error({ message: "System error" });
+    } finally {
+      setLoadingAudioIndex(null);
     }
   };
 
@@ -109,7 +116,7 @@ const SubmitMessage: React.FC = () => {
               </div>
               <button
                 disabled={loading}
-                className="w-full bg-violet-600 hover:bg-violet-900 transition duration-300 text-white p-2 rounded"
+                className="w-full bg-violet-500 hover:bg-violet-900 transition duration-300 text-white p-2 rounded"
                 onClick={handleSend}
               >
                 {loading ? (
@@ -138,18 +145,30 @@ const SubmitMessage: React.FC = () => {
 
         <div className="w-full space-y-2">
           {audios.map((audio, index) => (
-            <div className="flex gap-2 flex-col lg:flex-row" key={index}>
-              {audio && (
+            <div className="flex gap-2 justify-center" key={index}>
+              {/* {audio && (
                 <audio controls className="audio-player">
-                  <source src={audio} type="audio/mpeg" />
+                  <source src={audio?.url} type="audio/mpeg" />
                   Your browser does not support the audio element.
                 </audio>
-              )}
+              )} */}
               <button
-                onClick={() => handleSubmit(audio)}
-                className="rounded-full w-full lg:w-1/3 flex justify-center gap-2 text-sm font-semibold items-center bg-violet-600 hover:bg-violet-900 transition duration-300 text-white p-1 "
+                onClick={() => handleSubmit(audio?.url, index)}
+                className={`rounded-full w-full lg:w-1/2 flex justify-center gap-2 text-sm font-semibold items-center ${
+                  loadingAudioIndex === index ? "bg-gray-500" : "bg-violet-600"
+                } hover:bg-violet-900 transition duration-300 text-white p-1 `}
+                disabled={loadingAudioIndex === index}
               >
-                <FiUploadCloud /> Audio {index + 1}
+                {loadingAudioIndex === index ? (
+                  <>
+                    <LoadingOutlined style={{ marginRight: 8 }} />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <FiUploadCloud /> {audio?.name}
+                  </>
+                )}
               </button>
             </div>
           ))}
