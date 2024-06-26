@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-
 const PlayVideo: React.FC = () => {
   const video1 =
-    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1717647802/videoStream/ngedy7l9bog5zn4kjuay.mp4";
+    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1719311476/videoStream/new/lhd7y8lzdevwrke6fxyg.mp4";
   const video2 =
-    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1717660258/videoStream/s5qqdoqebuuu2fvgz7rf.mp4";
+    "https://res.cloudinary.com/dp8ita8x5/video/upload/v1719369835/videoStream/new/zfactesihab6eaj6nvi5.mp4";
 
   const [currentVideo, setCurrentVideo] = useState(video1);
   const [audioUrl, setAudioUrl] = useState("");
